@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string("GTIN");
             $table->string("name");
             $table->string("description");
-            $table->string("french_description");
-            $table->string("french_name");
+            $table->string("description_fr");
+            $table->string("name_fr");
             $table->string("brand_name");
             $table->string("country_of_origin");
             $table->string("gross_weight");
@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string("weight_unit");
             $table->string("category");
             $table->timestamps();
+
+            // $table->foreign('category')->references("id")->on("categories")->cascadeOnDelete();
         });
     }
 

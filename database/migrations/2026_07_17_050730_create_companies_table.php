@@ -23,8 +23,7 @@ return new class extends Migration
             $table->string("contact_name");
             $table->string("contact_mobile_number");
             $table->string("contact_email_address");
-            $table->enum("status", ["inactive", "active"])->default("active");
-
+            $table->boolean("is_active")->default(true);
             $table->timestamps();
         });
     }

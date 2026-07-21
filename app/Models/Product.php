@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Company extends Model
+class Product extends Model
 {
     protected $guarded = [];
 
-    public function products(){
-        return $this->belongsTo(Product::class);
+    public function companies(){
+        return $this->hasOne(Company::class);
     }
 }

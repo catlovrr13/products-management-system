@@ -64,29 +64,42 @@ class CompanyController extends Controller
             "contact_mobile_number" => "sometimes",
             "contact_email_address" => "sometimes",
         ]);
-    
+
         if ($validator->fails()) {
             return $this->BadRequest($validator->errors());
         }
-    
+
         $validated = $validator->validated();
-    
+
         $company->update($validated);
-    
+
         return redirect("/companies");
     }
 
     public function edit(Company $company)
-{
-    return Inertia::render('companies/edit', [
-        'company' => $company,
-    ]);
-}
-    
-    public function destroy(Company $company)
     {
-        $company->delete();
-    
+        return Inertia::render('companies/edit', [
+            'company' => $company,
+        ]);
+    }
+
+    public function show(Company $company)
+    {
+        return Inertia::render('companies/show', [
+            'company' => $company->load('products'),
+        ]);
+    }
+
+    public function deactivate(Company $company)
+    {
+        $company->update(['is_active' => false]);
         return redirect("/companies");
     }
+
+    // public function destroy(Company $company)
+    // {
+    //     $company->delete();
+
+    //     return redirect("/companies");
+    // }
 }

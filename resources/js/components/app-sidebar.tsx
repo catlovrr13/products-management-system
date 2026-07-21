@@ -17,6 +17,11 @@ const mainNavItems: NavItem[] = [
         title: 'Companies',
         url: '/companies',
         icon: LayoutGrid,
+    },        
+    {
+        title: 'Products',
+        url: '/products',
+        icon: LayoutGrid,
     },
 ];
 
