@@ -37,7 +37,6 @@ class CompanyController extends Controller
             "contact_name" => "required",
             "contact_mobile_number" => "required",
             "contact_email_address" => "required",
-            "status" => [Rule::in(["active", "inactive"])]
         ]);
 
         if ($validator->fails()) {
@@ -46,27 +45,48 @@ class CompanyController extends Controller
 
         $validated = $validator->validated();
 
-        $owner = Owner::create([
-            "name" => $validated["owner_name"],
-            "email_address" => $validated["owner_email_address"],
-            "mobile_number" => $validated["owner_mobile_number"],
-        ]);
+        $company = Company::create($validated);
 
-        $contact = Contact::create([
-            "name" => $validated["contact_name"],
-            "email_address" => $validated["contact_email_address"],
-            "mobile_number" => $validated["contact_mobile_number"],
-        ]);
+        return redirect("/companies");
+    }
 
-        $company = Company::create([
-            "name" => $validated["name"],
-            "address" => $validated["address"],
-            "telephone_number" => $validated["telephone_number"],
-            "email_address" => $validated["email_address"],
-            "owner_id" => $owner->id,
-            "contact_id" => $contact->id
+    public function update(Request $request, Company $company)
+    {
+        $validator = validator($request->all(), [
+            "name" => "sometimes",
+            "address" => "sometimes",
+            "telephone_number" => "sometimes",
+            "email_address" => "sometimes",
+            "owner_name" => "sometimes",
+            "owner_mobile_number" => "sometimes",
+            "owner_email_address" => "sometimes",
+            "contact_name" => "sometimes",
+            "contact_mobile_number" => "sometimes",
+            "contact_email_address" => "sometimes",
         ]);
+    
+        if ($validator->fails()) {
+            return $this->BadRequest($validator->errors());
+        }
+    
+        $validated = $validator->validated();
+    
+        $company->update($validated);
+    
+        return redirect("/companies");
+    }
 
+    public function edit(Company $company)
+{
+    return Inertia::render('companies/edit', [
+        'company' => $company,
+    ]);
+}
+    
+    public function destroy(Company $company)
+    {
+        $company->delete();
+    
         return redirect("/companies");
     }
 }

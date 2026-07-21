@@ -13,7 +13,6 @@ type CompanyForm = {
     address: string;
     telephone_number: string;
     email_address: string;
-    company_name: string;
     owner_name: string;
     owner_mobile_number: string;
     owner_email_address: string;
@@ -22,31 +21,36 @@ type CompanyForm = {
     contact_email_address: string;
 };
 
-export default function CreateCompany() {
-    const { data, setData, post, processing, errors, reset } = useForm<CompanyForm>({
-        name: '',
-        address: '',
-        telephone_number: '',
-        email_address: '',
-        company_name: '',
-        owner_name: '',
-        owner_mobile_number: '',
-        owner_email_address: '',
-        contact_name: '',
-        contact_mobile_number: '',
-        contact_email_address: ''
+interface Company extends CompanyForm {
+    id: number;
+}
+
+interface EditCompanyProps {
+    company: Company;
+}
+
+export default function EditCompany({ company }: EditCompanyProps) {
+    const { data, setData, put, processing, errors } = useForm<CompanyForm>({
+        name: company.name,
+        address: company.address,
+        telephone_number: company.telephone_number,
+        email_address: company.email_address,
+        owner_name: company.owner_name,
+        owner_mobile_number: company.owner_mobile_number,
+        owner_email_address: company.owner_email_address,
+        contact_name: company.contact_name,
+        contact_mobile_number: company.contact_mobile_number,
+        contact_email_address: company.contact_email_address,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('companies.store'), {
-            onSuccess: () => reset(),
-        });
+        put(route('companies.update', company.id));
     };
 
     return (
         <AppLayout>
-            <Head title="Create a Company" />
+            <Head title="Edit Company" />
             <form className="flex flex-col gap-6 p-10" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
@@ -204,7 +208,7 @@ export default function CreateCompany() {
 
                     <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Create company
+                        Update company
                     </Button>
                 </div>
             </form>

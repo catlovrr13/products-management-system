@@ -17,14 +17,15 @@ return new class extends Migration
             $table->string("address");
             $table->string("telephone_number");
             $table->string("email_address");
-            $table->unsignedBigInteger("owner_id");
-            $table->unsignedBigInteger("contact_id");
+            $table->string("owner_name");
+            $table->string("owner_mobile_number");
+            $table->string("owner_email_address");
+            $table->string("contact_name");
+            $table->string("contact_mobile_number");
+            $table->string("contact_email_address");
             $table->enum("status", ["inactive", "active"])->default("active");
 
             $table->timestamps();
-
-            $table->foreign("owner_id")->references("id")->on("owners");
-            $table->foreign("contact_id")->references("id")->on("contacts");
         });
     }
 
