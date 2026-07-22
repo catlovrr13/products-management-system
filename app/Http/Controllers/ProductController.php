@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -16,6 +17,48 @@ class ProductController extends Controller
             "products" => $products
         ]);
     }
+
+    public function json()
+    {
+        $query = request()->input("query") ?? "";
+        $page = request()->input("page") ?? 1;
+        $PRODUCT_PER_PAGE = 10;
+        $offset = ($page - 1) * $PRODUCT_PER_PAGE;
+        $products = Product::all();
+
+        $total_pages = round(count($products) / $PRODUCT_PER_PAGE, 0, PHP_ROUND_HALF_UP);
+
+        if ($page >= $total_pages) {
+            $next_url = null;
+            $next_page = null;
+        } else {
+            $next_page = $page + 1;
+            $next_url = "localhost:8000/products.json?page=" . $next_page;
+        }
+
+        if ($page <= 1) {
+            $prev_url = null;
+            $prev_page = null;
+        } else {
+            $prev_page = $page - 1;
+            $prev_url = "localhost:8000/products.json?page=" . $prev_page;
+        }
+        $products = Product::whereLike("name", "%$query%")->orWhereLike("name_fr", "%$query%")->orWhereLike("description", "%$query%")->orWhereLike("description_fr", "%$query%")->limit($PRODUCT_PER_PAGE)->offset($offset)->get();
+
+
+        return response()->json([
+            "data" => $products,
+            "pagination" => [
+                "current_page" => $page,
+                "per_page" => $PRODUCT_PER_PAGE,
+                "total_pages" => $total_pages,
+                "next_page_url" => $next_url,
+                "prev_page_url" => $prev_url
+            ]
+        ]);
+
+    }
+
     public function create()
     {
         return Inertia::render("products/create", []);
@@ -24,7 +67,7 @@ class ProductController extends Controller
     public function store()
     {
         $validator = validator(request()->all(), [
-            "GTIN" => "required",
+            "GTIN" => "required|max:14|min:13|unique:products,GTIN",
             "name" => "required",
             "description" => "required",
             "description_fr" => "required",
@@ -35,15 +78,34 @@ class ProductController extends Controller
             "net_content_weight" => "required",
             "weight_unit" => "required",
             "category" => "required",
+            "image" => "sometimes|image"
         ]);
 
         if ($validator->fails()) {
-            return $this->BadRequest($validator->errors());
+            return redirect("/products/create")->withErrors($validator->errors())->withInput(request()->all());
         }
 
         $validated = $validator->validated();
 
-        $product = Product::create($validated);
+        $file = request()->file("image");
+        $fileName = $file->getClientOriginalName();
+        $gtin = $validated["GTIN"];
+        Storage::disk('public')->putFileAs("products/$gtin", $file, $fileName);
+
+        $product = Product::create([
+            "GTIN" => $validated["GTIN"],
+            "name" => $validated["name"],
+            "description" => $validated["description"],
+            "description_fr" => $validated["description_fr"],
+            "name_fr" => $validated["name_fr"],
+            "brand_name" => $validated["brand_name"],
+            "country_of_origin" => $validated["country_of_origin"],
+            "gross_weight" => $validated["gross_weight"],
+            "net_content_weight" => $validated["net_content_weight"],
+            "weight_unit" => $validated["weight_unit"],
+            "category" => $validated["category"],
+            "image" => $fileName
+        ]);
 
         return redirect("/products");
     }
@@ -52,16 +114,7 @@ class ProductController extends Controller
     {
         $validator = validator($request->all(), [
             "GTIN" => "sometimes",
-            "name" => "sometimes",
-            "description" => "sometimes",
-            "description_fr" => "sometimes",
-            "name_fr" => "sometimes",
-            "brand_name" => "sometimes",
-            "country_of_origin" => "sometimes",
-            "gross_weight" => "sometimes",
-            "net_content_weight" => "sometimes",
-            "weight_unit" => "sometimes",
-            "category" => "sometimes",
+            "image" => "sometimes|image"
         ]);
 
         if ($validator->fails()) {
@@ -69,8 +122,15 @@ class ProductController extends Controller
         }
 
         $validated = $validator->validated();
+        $file = request()->file("image");
+        $fileName = $file->getClientOriginalName();
+        $gtin = $product->GTIN;
+        Storage::disk('public')->putFileAs("products/$gtin", $file, $fileName);
 
-        $product->update($validated);
+        $product->update([
+            "GTIN" => $validated["GTIN"],
+            "image" => $fileName
+        ]);
 
         return redirect("/products");
     }
@@ -78,14 +138,36 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         return Inertia::render('products/edit', [
-            'company' => $product,
+            'product' => $product,
         ]);
     }
 
-    public function show(Product $product)
+    public function show($gtin)
     {
+        $product = Product::where("GTIN", $gtin)->first();
+        if (!$product) {
+            return abort(404);
+        }
         return Inertia::render('products/show', [
-            'company' => $product,
+            'product' => $product,
         ]);
+    }
+
+    public function productJSON($gtin)
+    {
+        $product = Product::where("GTIN", $gtin)->first();
+
+        if (!$product) {
+            return abort(404);
+        }
+
+        return response()->json($product);
+    }
+
+    public function destroy(Product $product)
+    {
+        $product->delete();
+
+        return redirect("/products");
     }
 }

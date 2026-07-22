@@ -19,6 +19,22 @@ class CompanyController extends Controller
             "companies" => $companies
         ]);
     }
+
+    public function json()
+    {
+        $companies = Company::paginate(10);
+
+        return response()->json($companies);
+    }
+
+    public function companyJSON(Company $company)
+    {
+        if (!$company) {
+            return abort(404);
+        }
+
+        return response()->json($company);
+    }
     public function create()
     {
         return Inertia::render("companies/create", []);

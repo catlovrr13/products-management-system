@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string("net_content_weight");
             $table->string("weight_unit");
             $table->string("category");
+            $table->string("image")->nullable();
+            $table->boolean("is_hidden")->default(false);
             $table->timestamps();
 
             // $table->foreign('category')->references("id")->on("categories")->cascadeOnDelete();

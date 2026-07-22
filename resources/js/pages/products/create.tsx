@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { FileUploader } from 'react-drag-drop-files';
 
 type ProductForm = {
     GTIN: string;
@@ -20,9 +21,10 @@ type ProductForm = {
     net_content_weight: string;
     weight_unit: string;
     category: string;
+    image: any;
 };
 
-export default function CreateCompany() {
+export default function CreateProduct() {
     const { data, setData, post, processing, errors, reset } = useForm<ProductForm>({
         GTIN: '',
         name: '',
@@ -35,7 +37,9 @@ export default function CreateCompany() {
         net_content_weight: '',
         weight_unit: '',
         category: '',
+        image: '',
     });
+
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -49,8 +53,7 @@ export default function CreateCompany() {
             <Head title="Create a Product" />
             <form className="flex flex-col gap-6 p-10" onSubmit={submit}>
                 <div className="grid gap-6">
-                    
-                <div className="grid gap-2">
+                    <div className="grid gap-2">
                         <Label htmlFor="GTIN">GTIN</Label>
                         <Input
                             id="GTIN"
@@ -217,6 +220,17 @@ export default function CreateCompany() {
                             placeholder="category"
                         />
                         <InputError message={errors.category} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="image">Image</Label>
+                        <FileUploader 
+                            name='image'
+                            hoverTitle='Upload Image Here'
+                            handleChange={(file) => {
+                                setData("image", file)
+                            }}
+                        />
                     </div>
 
                     <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
