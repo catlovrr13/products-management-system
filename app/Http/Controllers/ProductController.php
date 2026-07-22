@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -27,13 +28,13 @@ class ProductController extends Controller
         $products = Product::all();
 
         $total_pages = round(count($products) / $PRODUCT_PER_PAGE, 0, PHP_ROUND_HALF_UP);
-
+        $app_url = Env('APP_URL');
         if ($page >= $total_pages) {
             $next_url = null;
             $next_page = null;
         } else {
             $next_page = $page + 1;
-            $next_url = "localhost:8000/products.json?page=" . $next_page;
+            $next_url = "$app_url/products.json?page=" . $next_page;
         }
 
         if ($page <= 1) {
@@ -41,7 +42,7 @@ class ProductController extends Controller
             $prev_page = null;
         } else {
             $prev_page = $page - 1;
-            $prev_url = "localhost:8000/products.json?page=" . $prev_page;
+            $prev_url = "$app_url/products.json?page=" . $prev_page;
         }
         $products = Product::whereLike("name", "%$query%")->orWhereLike("name_fr", "%$query%")->orWhereLike("description", "%$query%")->orWhereLike("description_fr", "%$query%")->limit($PRODUCT_PER_PAGE)->offset($offset)->get();
 
@@ -169,5 +170,32 @@ class ProductController extends Controller
         $product->delete();
 
         return redirect("/products");
+    }
+
+    public function find()
+    {
+        $validator = validator(request()->all(), [
+            "GTIN" => "required"
+        ]);
+        if ($validator->fails()) {
+            return redirect("/products/validate")->withErrors($validator->errors())->withInput(request()->all());
+        }
+
+        $validated = $validator->validated();
+       
+        $GTINs = explode("\n", $validated['GTIN']);
+        
+        $products = Product::whereIn("GTIN", $GTINs)->get();
+
+        return Inertia::render("products/validate", [
+            "products" => $products
+        ]);
+    }
+
+    public function validate(Product $product)
+    {
+        return Inertia::render('products/validate', [
+            'product' => $product,
+        ]);
     }
 }

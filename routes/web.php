@@ -27,11 +27,14 @@ Route::get('/products.json', [ProductController::class, 'json'])->name('products
 Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
 Route::post('/products', [ProductController::class, 'store'])->name('products.store');
 
+Route::get('/products/validate', [ProductController::class, 'validate'])->name('products.validate');
+Route::post('/products/validate', [ProductController::class, 'find'])->name('products.find');
 Route::post('/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
 Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get("/products/{gtin}.json", [ProductController::class, 'productJSON'])->name('products.productJSON');
 Route::get('/products/{gtin}', [ProductController::class, 'show'])->name('products.show');
+
 
 
 
