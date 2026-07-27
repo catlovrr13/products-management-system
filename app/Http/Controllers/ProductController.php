@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Env;
@@ -88,27 +89,15 @@ class ProductController extends Controller
 
         $validated = $validator->validated();
 
-        $file = request()->file("image");
-        $fileName = $file->getClientOriginalName();
-        $gtin = $validated["GTIN"];
-        Storage::disk('public')->putFileAs("products/$gtin", $file, $fileName);
+        if (request()->hasFile('image')) {
+            $file = request()->file('image');
+            $fileName = $file->getClientOriginalName();
+            Storage::disk('public')->putFileAs("products/{$validated['GTIN']}", $file, $fileName);
+            $validated['image'] = $fileName;
+        }
 
-        $product = Product::create([
-            "GTIN" => $validated["GTIN"],
-            "name" => $validated["name"],
-            "description" => $validated["description"],
-            "description_fr" => $validated["description_fr"],
-            "name_fr" => $validated["name_fr"],
-            "brand_name" => $validated["brand_name"],
-            "country_of_origin" => $validated["country_of_origin"],
-            "gross_weight" => $validated["gross_weight"],
-            "net_content_weight" => $validated["net_content_weight"],
-            "weight_unit" => $validated["weight_unit"],
-            "category" => $validated["category"],
-            "image" => $fileName
-        ]);
-
-        return redirect("/products");
+        Product::create($validated);
+        return redirect('/products');
     }
 
     public function update(Request $request, Product $product)
@@ -121,19 +110,15 @@ class ProductController extends Controller
         if ($validator->fails()) {
             return $this->BadRequest($validator->errors());
         }
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = $file->getClientOriginalName();
+            Storage::disk('public')->putFileAs("products/{$product->GTIN}", $file, $fileName);
+            $validated['image'] = $fileName;
+        }
 
-        $validated = $validator->validated();
-        $file = request()->file("image");
-        $fileName = $file->getClientOriginalName();
-        $gtin = $product->GTIN;
-        Storage::disk('public')->putFileAs("products/$gtin", $file, $fileName);
-
-        $product->update([
-            "GTIN" => $validated["GTIN"],
-            "image" => $fileName
-        ]);
-
-        return redirect("/products");
+        $product->update($validated);
+        return redirect("/products/{$product->GTIN}");
     }
 
     public function edit(Product $product)
@@ -182,9 +167,9 @@ class ProductController extends Controller
         }
 
         $validated = $validator->validated();
-       
+
         $GTINs = explode("\n", $validated['GTIN']);
-        
+
         $products = Product::whereIn("GTIN", $GTINs)->get();
 
         return Inertia::render("products/validate", [
@@ -195,6 +180,33 @@ class ProductController extends Controller
     public function validate(Product $product)
     {
         return Inertia::render('products/validate', [
+            'product' => $product,
+        ]);
+    }
+
+    public function publicIndex(Request $request)
+    {
+        $query = Product::where('is_hidden', false)->with('company');
+
+        if ($request->filled('company_id'))
+            $query->where('company_id', $request->company_id);
+        if ($request->filled('category'))
+            $query->where('category', $request->category);
+
+        return Inertia::render('public/products', [
+            'products' => $query->get(),
+            'companies' => Company::all(['id', 'name']),
+            'categories' => Product::where('is_hidden', false)->select('category')->distinct()->pluck('category'),
+        ]);
+    }
+
+        public function publicShow($gtin)
+    {
+        $product = Product::where("GTIN", $gtin)->first();
+        if (!$product) {
+            return abort(404);
+        }
+        return Inertia::render('public/show', [
             'product' => $product,
         ]);
     }

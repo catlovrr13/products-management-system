@@ -8,7 +8,7 @@ class Product extends Model
 {
     protected $guarded = [];
 
-    public function companies(){
-        return $this->hasOne(Company::class);
+    public function company(){
+        return $this->belongsTo(Company::class);
     }
 }

@@ -102,20 +102,23 @@ class CompanyController extends Controller
     public function show(Company $company)
     {
         return Inertia::render('companies/show', [
-            'company' => $company->load('products'),
+            'company' => $company,
         ]);
     }
 
     public function deactivate(Company $company)
     {
         $company->update(['is_active' => false]);
+        $company->products()->update(["is_hidden" => true]);
         return redirect("/companies");
     }
 
-    // public function destroy(Company $company)
-    // {
-    //     $company->delete();
+    public function inactive(){
+        $companies = Company::where("is_active", false)->get();
 
-    //     return redirect("/companies");
-    // }
+        return Inertia::render("/companies/inactive", [
+            "companies" => $companies
+        ]);
+    }
+
 }
