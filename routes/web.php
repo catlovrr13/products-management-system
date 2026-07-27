@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -42,9 +43,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 });
 
+Route::middleware('auth')->group(function () {
+    Route::patch('/users/{user}/avatar', [AuthController::class, 'updateAvatar'])->name('users.avatar.update');
+    Route::delete('/users/{user}/avatar', [AuthController::class, 'removeAvatar'])->name('users.avatar.destroy');
+});
+
 Route::get('public/products/{gtin}', [ProductController::class, 'publicShow'])->name('products.publicShow');
 Route::get('/public/products', [ProductController::class, 'publicIndex'])->name('products.publicIndex');
 
+Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->middleware('auth')->name('reviews.store');
 
 
 Route::middleware(['auth'])->group(function () {

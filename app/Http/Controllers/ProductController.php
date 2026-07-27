@@ -200,14 +200,18 @@ class ProductController extends Controller
         ]);
     }
 
-        public function publicShow($gtin)
-    {
-        $product = Product::where("GTIN", $gtin)->first();
-        if (!$product) {
-            return abort(404);
-        }
-        return Inertia::render('public/show', [
-            'product' => $product,
-        ]);
+public function publicShow($gtin)
+{
+    $product = Product::where('GTIN', $gtin)->where('is_hidden', false)->with(['company', 'reviews.user'])->first();
+
+    if (!$product) {
+        return abort(404);
     }
+
+    return Inertia::render('public/show', [
+        'product' => $product,
+        'avgRating' => round($product->reviews()->avg('rating') ?? 0, 1),
+        'reviewCount' => $product->reviews()->count(),
+    ]);
+}
 }

@@ -4,44 +4,46 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
-    public function login()
+    public function editAvatar(Request $request)
     {
-        $validator = validator(request()->all(), [
-            "email" => "required",
-            "password" => "required"
+        return Inertia::render('users/profile', [
+            'user' => $request->user(),
+        ]);
+    }
+    public function updateAvatar(Request $request, User $user)
+    {
+        abort_unless($request->user()->id === $user->id, 403);
+
+        $validated = $request->validate([
+            'avatar' => 'required|image|max:2048',
         ]);
 
-        if ($validator->fails()) {
-            return $this->BadRequest($validator->errors());
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
         }
 
-        if (!auth()->guard()->attempt($validator->validated())) {
-            return $this->Unauthenticated($validator->errors());
-        }
+        $path = $request->file('avatar')->store('avatars', 'public');
 
-        $user = auth()->user();
+        $user->update(['avatar' => $path]);
 
-        return $this->OK($user, "User logged in successfully");
+        return back();
     }
 
-    public function register()
+    public function removeAvatar(Request $request, User $user)
     {
-        $validator = validator(request()->all(), [
-            "email" => "required|unique:users,email|email",
-            "name" => "required|max:255",
-            "password" => "required|min:8|max:255",
-            "role" => User::find(1) ? "user" : "admin"
-        ]);
+        abort_unless($request->user()->id === $user->id, 403);
 
-        if ($validator->fails()) {
-            return $this->BadRequest($validator->errors());
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
         }
 
-        $user = User::create($validator->validated());
+        $user->update(['avatar' => null]);
 
-        return $this->Created($user, "User registered successfully");
+        return back();
     }
 }
