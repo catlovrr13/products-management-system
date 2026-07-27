@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Str;
 
 class RegisteredUserController extends Controller
 {
@@ -30,19 +31,32 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+       $validated = $request->validate([
             'name' => 'required|string|max:255|min:6',
-            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'username' => [
+                'required',
+                'string',
+                'min:6',
+                'max:30',
+                'unique:' . User::class,
+                'regex:/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9_]+$/',
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'avatar' => "nullable|image|max:2048",
-
+            'avatar' => "nullable|mimes:jpg,jpeg,png,gif|max:2048",
+        ], [
+            'username.regex' => 'Username must contain both letters and numbers.',
         ]);
 
+        $avatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+        }
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'avatar' => $request->file("avatar"),
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'password' => Hash::make($validated['password']),
+            'avatar' => $avatarPath,
             'role' => User::count() === 0 ? 'admin' : 'user',
         ]);
 
